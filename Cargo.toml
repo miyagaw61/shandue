@@ -1,0 +1,10 @@
+[package]
+name = "shandue"
+version = "0.0.1"
+authors = ["miyagaw61 <miyagaw61@gmail.com>"]
+
+[dependencies]
+serde_json = "1.0.31"
+renert = { git = "https://github.com/miyagaw61/renert" }
+clap = "2.32.0"
+colored = "1.6.1"
