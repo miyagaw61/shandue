@@ -32,7 +32,15 @@ shandue -h for help\
 fn enqueue(matches: &clap::ArgMatches) -> Result<i32, String> {
     println!("{}", "[+]start.".red().bold());
     let enqueue_subcmd = matches.subcommand_matches("enqueue").unwrap();
-    let json_file = enqueue_subcmd.value_of("json_file").unwrap();
+    let json_files = enqueue_subcmd.values_of("json_file").unwrap();
+    for json_file in json_files {
+        execute(json_file);
+    }
+    println!("{}", "[+]finish.".red().bold());
+    return Ok(0);
+}
+
+fn execute(json_file: &str) -> Result<i32, String> {
     let mut f = OpenOptions::new().read(true).open(json_file).map_err(|e| format!("{}: \"{}\"", e, json_file))?;
     let mut json_data: String = String::new();
     f.read_to_string(&mut json_data).map_err(|e| e.to_string())?;
@@ -45,8 +53,7 @@ fn enqueue(matches: &clap::ArgMatches) -> Result<i32, String> {
             std::process::exit(0);
         }
     }
-    println!("{}", "[+]finish.".red().bold());
-    Ok(0)
+    return Ok(0);
 }
 
 fn main() {
@@ -59,6 +66,7 @@ fn main() {
                          .help("json_file - help message")
                          .takes_value(true)
                          .required(true)
+                         .multiple(true)
                          )
                     )
         .get_matches();
