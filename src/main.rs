@@ -34,7 +34,7 @@ fn enqueue(matches: &clap::ArgMatches) -> Result<i32, String> {
     let enqueue_subcmd = matches.subcommand_matches("enqueue").unwrap();
     let json_files = enqueue_subcmd.values_of("json_file").unwrap();
     for json_file in json_files {
-        execute(json_file);
+        execute(json_file)?;
     }
     println!("{}", "[+]finish.".red().bold());
     return Ok(0);
@@ -45,7 +45,12 @@ fn execute(json_file: &str) -> Result<i32, String> {
     let mut json_data: String = String::new();
     f.read_to_string(&mut json_data).map_err(|e| e.to_string())?;
     let json_data: BTreeMap<String, String> = serde_json::from_str(&json_data).map_err(|e| format!("Failed to parse json: {}", e))?;
-    let cmd = json_data.get("cmd").ok_or("Key not found: \"cmd\"")?;
+    let cmd = json_data.get("cmd").ok_or("Key not found: \"cmd\"")?.to_string();
+    let cgroup = json_data.get("cgroup");
+    let cmd: String = match cgroup {
+        Some(x) => ["sh -c \"echo \\$$ | sudo tee /sys/fs/cgroup/", x, "/tasks 1> /dev/null && ", &cmd, "\""].join(""),
+        None => cmd
+    };
     match system_on_shell(&cmd) {
         Ok(o) => println!("{}", o.stdout),
         Err(o) => {
