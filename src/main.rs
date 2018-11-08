@@ -34,13 +34,13 @@ fn enqueue(matches: &clap::ArgMatches) -> Result<i32, String> {
     let enqueue_subcmd = matches.subcommand_matches("enqueue").unwrap();
     let json_files = enqueue_subcmd.values_of("json_file").unwrap();
     for json_file in json_files {
-        execute(json_file)?;
+        rpush(json_file)?;
     }
     println!("{}", "[+]finish.".red().bold());
     return Ok(0);
 }
 
-fn execute(json_file: &str) -> Result<i32, String> {
+fn rpush(json_file: &str) -> Result<i32, String> {
     let mut f = OpenOptions::new().read(true).open(json_file).map_err(|e| format!("{}: \"{}\"", e, json_file))?;
     let mut json_data: String = String::new();
     f.read_to_string(&mut json_data).map_err(|e| e.to_string())?;
@@ -51,13 +51,21 @@ fn execute(json_file: &str) -> Result<i32, String> {
         Some(x) => ["sh -c \"echo \\$$ | sudo tee /sys/fs/cgroup/", x, "/tasks 1> /dev/null && ", &cmd, "\""].join(""),
         None => cmd
     };
-    match system_on_shell(&cmd) {
+    println!("{}", cmd);
+    match system_on_shell(&["redis-cli rpush commands '", &cmd, "'"].join("")) {
         Ok(o) => println!("{}", o.stdout),
         Err(o) => {
             my_eprint(o.stderr);
             std::process::exit(0);
         }
     }
+    //match system_on_shell(&cmd) {
+    //    Ok(o) => println!("{}", o.stdout),
+    //    Err(o) => {
+    //        my_eprint(o.stderr);
+    //        std::process::exit(0);
+    //    }
+    //}
     return Ok(0);
 }
 
